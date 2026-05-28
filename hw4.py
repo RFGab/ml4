@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.datasets import load_digits
-from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 from PIL import Image
 
@@ -26,7 +26,7 @@ def main():
 
     # Разделяем цифры через DBSCAN
     # eps=15 подбирается под разрешение картинки
-    dbscan = DBSCAN(eps=15, min_samples=10)
+    dbscan = DBSCAN(eps=10, min_samples=5)
     dbscan.fit(points)
     labels = dbscan.labels_
     
@@ -51,30 +51,29 @@ def main():
         resized = Image.fromarray(crop).resize((8, 8))
         arr_8x8 = np.array(resized)
         
-        # В датасете load_digits фон = 0, цифры = до 16. 
-        # У нас фон = 255, цифры 0. Инвертируем и масштабируем.
+        # В датасете load_digits фон = 0, цифры = до 16
+        # У нас фон = 255, цифры 0. Инвертируем и масштабируем
         flat_feature = ((255 - arr_8x8) / 16.0).flatten()
         digit_features.append(flat_feature)
         
     digit_features = np.array(digit_features)
     print(f"Найдено объектов: {len(digit_features)}")
 
-    # Обучаем модель на встроенном датасете
     X, y = load_digits(return_X_y=True)
-    clf = MLPClassifier(hidden_layer_sizes=(100,), max_iter=1000, random_state=42)
+    clf = RandomForestClassifier(n_estimators=100, random_state=42)
     clf.fit(X, y)
     
     # Делаем предсказание на наших вырезанных цифрах
     predictions = clf.predict(digit_features)
     print(f"Распознанные числа: {predictions}")
     
-    # Визуализируем результат (чтобы препод видел, что всё корректно)
+    # Визуализируем резы
     fig, axes = plt.subplots(1, len(predictions), figsize=(10, 2))
     if len(predictions) == 1:
         axes = [axes]
     for i, ax in enumerate(axes):
-        ax.imshow(digit_features[i].reshape(8, 8), cmap='gray')
-        ax.set_title(f"Предсказание: {predictions[i]}")
+        ax.imshow(digit_features[i].reshape(8, 8))
+        ax.set_title(f"Распознано: {predictions[i]}")
         ax.axis('off')
     plt.tight_layout()
     plt.show()
